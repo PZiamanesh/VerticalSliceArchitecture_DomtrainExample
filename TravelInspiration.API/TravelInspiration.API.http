@@ -1,0 +1,19 @@
+@HostAddressRoot = https://localhost:45001
+
+GET {{HostAddressRoot}}/api/destinations?searchFor=a
+Accept: application/json
+
+###
+
+GET {{HostAddressRoot}}/api/destinations
+Accept: application/json
+
+###
+
+GET {{HostAddressRoot}}/api/itineraries?searchFor=Paris
+Accept: application/json
+
+###
+
+GET {{HostAddressRoot}}/api/itineraries/2/stops
+Accept: application/json
