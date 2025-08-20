@@ -7,7 +7,7 @@ using TravelInspiration.API.Shared.Slices;
 
 namespace TravelInspiration.API.Features.Stops;
 
-public class GetStops : ISlice
+public sealed class GetStops : ISlice
 {
     public void AddEndPoints(IEndpointRouteBuilder app)
     {
@@ -35,7 +35,7 @@ public sealed class GetStopsQuery : IRequest<GetStopsResponse>
 
 public sealed class GetStopsResponse
 {
-    public required IEnumerable<StopDto> Stops { get; init; }
+    public required IEnumerable<GetStopDto> Stops { get; init; }
 }
 
 public sealed class GetStopsHandler : IRequestHandler<GetStopsQuery, GetStopsResponse>
@@ -59,17 +59,17 @@ public sealed class GetStopsHandler : IRequestHandler<GetStopsQuery, GetStopsRes
 
         if (itinerary is null || !itinerary.Stops.Any())
         {
-            return new GetStopsResponse { Stops = Enumerable.Empty<StopDto>() };
+            return new GetStopsResponse { Stops = Enumerable.Empty<GetStopDto>() };
         }
 
         return new GetStopsResponse
         {
-            Stops = _mapper.Map<IEnumerable<StopDto>>(itinerary.Stops)
+            Stops = _mapper.Map<IEnumerable<GetStopDto>>(itinerary.Stops)
         };
     }
 }
 
-public sealed class StopDto
+public sealed class GetStopDto
 {
     public required int Id { get; set; }
     public required string Name { get; set; }
@@ -77,10 +77,10 @@ public sealed class StopDto
     public required int ItineraryId { get; set; }
 }
 
-public sealed class StopMapProfile : Profile
+public sealed class GetStopMapProfile : Profile
 {
-    public StopMapProfile()
+    public GetStopMapProfile()
     {
-        CreateMap<Stop, StopDto>();
+        CreateMap<Stop, GetStopDto>();
     }
 }

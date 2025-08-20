@@ -8,7 +8,7 @@ using TravelInspiration.API.Shared.Slices;
 
 namespace TravelInspiration.API.Features.Itineraries;
 
-public class GetItineraries : ISlice
+public sealed class GetItineraries : ISlice
 {
     public void AddEndPoints(IEndpointRouteBuilder app)
     {
@@ -71,7 +71,6 @@ public sealed class GetItinerariesQueryHandler : IRequestHandler<GetItinerariesQ
         };
     }
 }
-
 
 public sealed class ItinerariDto
 {
