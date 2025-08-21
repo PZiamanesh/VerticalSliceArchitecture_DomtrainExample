@@ -2,6 +2,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Polly;
+using TravelInspiration.API.Shared.Common;
 using TravelInspiration.API.Shared.Domain.Entities;
 using TravelInspiration.API.Shared.Persistence;
 using TravelInspiration.API.Shared.Slices;
@@ -22,12 +23,12 @@ public sealed class GetItineraries : ISlice
                 SearchFor = searchFor
             }, cancellationToken);
 
-            if (response.Itineraries is null || !response.Itineraries.Any())
+            if (response.HasError)
             {
-                return Results.NotFound();
+                return ProblemDetailResult.ProblemDetail(response);
             }
 
-            return Results.Ok(response.Itineraries);
+            return Results.Ok(response.ResponseData);
         });
     }
 }
@@ -37,9 +38,9 @@ public sealed class GetItinerariesQuery : IRequest<GetItinerariesResponse>
     public string? SearchFor { get; init; }
 }
 
-public sealed class GetItinerariesResponse
+public sealed class GetItinerariesResponse : Response<IEnumerable<ItinerariDto>>
 {
-    public required IEnumerable<ItinerariDto> Itineraries { get; init; }
+    public override IEnumerable<ItinerariDto> ResponseData { get; set; }
 }
 
 public sealed class GetItinerariesQueryHandler : IRequestHandler<GetItinerariesQuery, GetItinerariesResponse>
@@ -58,6 +59,7 @@ public sealed class GetItinerariesQueryHandler : IRequestHandler<GetItinerariesQ
     public async Task<GetItinerariesResponse> Handle(GetItinerariesQuery request, CancellationToken cancellationToken)
     {
         var itineraries = await _dbContext.Itineraries
+                .AsNoTracking()
                 .Where(i => request.SearchFor == null ||
                             i.Name.Contains(request.SearchFor) ||
                             (i.Description != null && i.Description.Contains(request.SearchFor)))
@@ -67,7 +69,7 @@ public sealed class GetItinerariesQueryHandler : IRequestHandler<GetItinerariesQ
 
         return new GetItinerariesResponse
         {
-            Itineraries = itinerariesDto
+            ResponseData = itinerariesDto
         };
     }
 }

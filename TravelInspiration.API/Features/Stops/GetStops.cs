@@ -19,9 +19,9 @@ public sealed class GetStops : ISlice
         {
             var response = await mediator.Send(new GetStopsQuery { ItineraryId = idineraryId }, cancellationToken);
 
-            if (!response.ResponseData.Any())
+            if (response.HasError)
             {
-                return Results.NotFound();
+                return ProblemDetailResult.ProblemDetail(response);
             }
 
             return Results.Ok(response.ResponseData);
@@ -55,15 +55,13 @@ public sealed class GetStopsHandler : IRequestHandler<GetStopsQuery, GetStopsRes
     public async Task<GetStopsResponse> Handle(GetStopsQuery request, CancellationToken cancellationToken)
     {
         var itinerary = await _dbContext.Itineraries
+            .AsNoTracking()
             .Include(i => i.Stops)
             .FirstOrDefaultAsync(i => i.Id == request.ItineraryId, cancellationToken);
 
         if (itinerary is null || !itinerary.Stops.Any())
         {
-            return new GetStopsResponse
-            {
-                ResponseData = Enumerable.Empty<GetStopDto>()
-            };
+            return new GetStopsResponse { LogicError = $"Itinerary with id {request.ItineraryId} was not found", StatusCode = 400 };
         }
 
         return new GetStopsResponse

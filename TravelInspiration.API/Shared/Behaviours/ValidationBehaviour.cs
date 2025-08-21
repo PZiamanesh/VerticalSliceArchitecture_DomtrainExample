@@ -43,6 +43,6 @@ public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TReque
                             Erros = g.Select(e => e.ErrorMessage).ToList()
                         }).ToDictionary(i => i.PropertyName, i => i.Erros.ToArray());
 
-        return new TResponse { Errors = errorDic, StatusCode = 400 };
+        return new TResponse { ValidationErrors = errorDic, StatusCode = 400 };
     }
 }

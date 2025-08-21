@@ -26,7 +26,7 @@ public sealed class CreateStop : ISlice
 
             if (response.HasError)
             {
-                return Results.ValidationProblem(errors: response.Errors, statusCode: response.StatusCode);
+                return ProblemDetailResult.ProblemDetail(response);
             }
 
             return Results.Created($"api/itineraries/{itineraryId}/stops/{response.ResponseData.Id}", response.ResponseData);
@@ -84,13 +84,7 @@ public sealed class CreateStopCommandHandler : IRequestHandler<CreateStopCommand
     {
         if (!await _dbContext.Itineraries.AnyAsync(i => i.Id == command.ItineraryId))
         {
-            return new CreateStopResponse
-            {
-                Errors =
-                {
-                    { string.Empty , new string[] { "Itinerary not found." } }
-                }
-            };
+            return new CreateStopResponse { LogicError = $"Itinerary with id {command.ItineraryId} was not found.", StatusCode = 400 };
         }
 
         var stop = new Stop(command.Name);
