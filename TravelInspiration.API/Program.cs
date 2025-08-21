@@ -4,9 +4,13 @@ using TravelInspiration.API.Shared.Slices;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpClient();
+
+builder.Services.AddProblemDetails();
    
 builder.Services.RegisterApplicationServices();
+
 builder.Services.RegisterPersistenceServices(builder.Configuration);
+
 
 
 

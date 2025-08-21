@@ -1,11 +1,11 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using TravelInspiration.API.Shared.Common;
 using TravelInspiration.API.Shared.Domain.Entities;
 using TravelInspiration.API.Shared.Persistence;
 using TravelInspiration.API.Shared.Slices;
-using static TravelInspiration.API.Features.Stops.CreateStopCommandHandler;
 
 namespace TravelInspiration.API.Features.Stops;
 
@@ -20,11 +20,13 @@ public sealed class CreateStop : ISlice
             CancellationToken cancellationToken,
             IMediator mediator) =>
         {
+            createCommand.ItineraryId = itineraryId;
+
             var response = await mediator.Send(createCommand);
 
-            if (response.ResponseData is null || response.HasError)
+            if (response.HasError)
             {
-                return Results.Problem(detail: response.ErrorMessage, statusCode: response.ErrorCode);
+                return Results.ValidationProblem(errors: response.Errors, statusCode: response.StatusCode);
             }
 
             return Results.Created($"api/itineraries/{itineraryId}/stops/{response.ResponseData.Id}", response.ResponseData);
@@ -34,17 +36,35 @@ public sealed class CreateStop : ISlice
 
 public sealed class CreateStopCommand : IRequest<CreateStopResponse>
 {
-    public required string Name { get; set; }
-    public Uri? ImageUri { get; set; }
-    public required int ItineraryId { get; set; }
+    public string Name { get; set; }
+    public string? ImageUri { get; set; }
+    public int ItineraryId { get; set; }
 }
 
-public sealed class CreateStopResponse : IMessageResponse<CreateStopDto>
+public sealed class CreateStopResponse : Response<CreateStopDto>
 {
-    public CreateStopDto? ResponseData { get; set; }
-    public bool HasError { get; set; }
-    public short ErrorCode { get; set; }
-    public string? ErrorMessage { get; set; }
+    public override CreateStopDto ResponseData { get; set; }
+}
+
+public sealed class CreateStopValidator : AbstractValidator<CreateStopCommand>
+{
+    public CreateStopValidator()
+    {
+        RuleFor(i => i.Name)
+            .NotEmpty()
+            .MinimumLength(3)
+            .MaximumLength(100);
+
+        RuleFor(i => i.ImageUri)
+            .Must(i => Uri.TryCreate(i, UriKind.Absolute, out var _))
+            .When(i => !string.IsNullOrEmpty(i.ImageUri))
+            .WithMessage("Incorrect image uri format. Absolute path needed.");
+
+        RuleFor(i => i.ItineraryId)
+            .NotEmpty()
+            .Must(i => i > 0)
+            .WithMessage("ItineraryId must be greater than 0.");
+    }
 }
 
 public sealed class CreateStopCommandHandler : IRequestHandler<CreateStopCommand, CreateStopResponse>
@@ -64,14 +84,17 @@ public sealed class CreateStopCommandHandler : IRequestHandler<CreateStopCommand
     {
         if (!await _dbContext.Itineraries.AnyAsync(i => i.Id == command.ItineraryId))
         {
-            return new CreateStopResponse { HasError = true, ErrorCode = 404, ErrorMessage = "Itinerary not found." };
+            return new CreateStopResponse
+            {
+                Errors =
+                {
+                    { string.Empty , new string[] { "Itinerary not found." } }
+                }
+            };
         }
 
-        var stop = new Stop(command.Name)
-        {
-            ImageUri = command.ImageUri,
-            ItineraryId = command.ItineraryId
-        };
+        var stop = new Stop(command.Name);
+        stop.HandleCreateStopCommand(command);
 
         _dbContext.Stops.Add(stop);
         await _dbContext.SaveChangesAsync(cancellationToken);

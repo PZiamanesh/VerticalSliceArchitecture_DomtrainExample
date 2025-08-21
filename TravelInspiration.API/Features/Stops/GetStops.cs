@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using TravelInspiration.API.Shared.Common;
 using TravelInspiration.API.Shared.Domain.Entities;
 using TravelInspiration.API.Shared.Persistence;
 using TravelInspiration.API.Shared.Slices;
@@ -18,12 +19,12 @@ public sealed class GetStops : ISlice
         {
             var response = await mediator.Send(new GetStopsQuery { ItineraryId = idineraryId }, cancellationToken);
 
-            if (response.Stops is null || !response.Stops.Any())
+            if (!response.ResponseData.Any())
             {
                 return Results.NotFound();
             }
 
-            return Results.Ok(response.Stops);
+            return Results.Ok(response.ResponseData);
         });
     }
 }
@@ -33,9 +34,9 @@ public sealed class GetStopsQuery : IRequest<GetStopsResponse>
     public required int ItineraryId { get; init; }
 }
 
-public sealed class GetStopsResponse
+public sealed class GetStopsResponse : Response<IEnumerable<GetStopDto>>
 {
-    public required IEnumerable<GetStopDto> Stops { get; init; }
+    public override IEnumerable<GetStopDto> ResponseData { get; set; }
 }
 
 public sealed class GetStopsHandler : IRequestHandler<GetStopsQuery, GetStopsResponse>
@@ -59,12 +60,15 @@ public sealed class GetStopsHandler : IRequestHandler<GetStopsQuery, GetStopsRes
 
         if (itinerary is null || !itinerary.Stops.Any())
         {
-            return new GetStopsResponse { Stops = Enumerable.Empty<GetStopDto>() };
+            return new GetStopsResponse
+            {
+                ResponseData = Enumerable.Empty<GetStopDto>()
+            };
         }
 
         return new GetStopsResponse
         {
-            Stops = _mapper.Map<IEnumerable<GetStopDto>>(itinerary.Stops)
+            ResponseData = _mapper.Map<IEnumerable<GetStopDto>>(itinerary.Stops)
         };
     }
 }

@@ -1,10 +1,17 @@
 ﻿namespace TravelInspiration.API.Shared.Common;
 
-public interface IMessageResponse<T> 
+public interface IMessageResponse
+{
+    public bool HasError { get; }
+    public short StatusCode { get; set; }
+    public Dictionary<string, string[]> Errors { get; set; }
+}
+
+public abstract class Response<T> : IMessageResponse
     where T : class
 {
-    public T? ResponseData { get; set; }
-    public bool HasError { get; set; }
-    public short ErrorCode { get; set; }
-    public string? ErrorMessage { get; set; }
+    public abstract T ResponseData { get; set; }
+    public bool HasError => Errors.Any();
+    public Dictionary<string, string[]> Errors { get; set; } = new();
+    public short StatusCode { get; set; }
 }

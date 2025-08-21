@@ -8,19 +8,19 @@ GET {{HostAddressRoot}}/api/destinations
 Accept: application/json
 
 ###
-GET {{HostAddressRoot}}/api/itineraries?searchFor=Paris
+GET {{HostAddressRoot}}/api/itineraries
 Accept: application/json
 
 ###
-GET {{HostAddressRoot}}/api/itineraries/2/stops
+GET {{HostAddressRoot}}/api/itineraries/23/stops
 Accept: application/json
 
 ###
-POST {{HostAddressRoot}}/api/itineraries/2/stops
+POST {{HostAddressRoot}}/api/itineraries/-2/stops
 Accept: application/json
 Content-Type: application/json
 {
-  "name": "create stop test",
+  "name" : "test create stop",
   "imageUri": "https://localhost:45000/images/perelachaise.jpg",
-  "itineraryId": 2
+  "itineraryId": -2
 }
