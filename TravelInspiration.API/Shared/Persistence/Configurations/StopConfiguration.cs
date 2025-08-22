@@ -23,6 +23,11 @@ public class StopConfiguration : IEntityTypeConfiguration<Stop>
                 v => v.ToString(),
                 v => string.IsNullOrEmpty(v) ? null : new Uri(v));
 
+        builder.Property(s => s.IsSuggested)
+            .HasDefaultValue(false);
+
+        builder.Ignore(s => s.DomainEvents);
+
         builder.HasOne(s => s.Itinerary)
             .WithMany(i => i.Stops)
             .HasForeignKey(s => s.ItineraryId)

@@ -1,17 +1,24 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using System.Reflection.Emit;
+using TravelInspiration.API.Shared.Common;
 using TravelInspiration.API.Shared.Domain.Entities;
 
 namespace TravelInspiration.API.Shared.Persistence;
 
 public class TravelInspirationDbContext : DbContext
 {
+    private readonly IPublisher _publisher;
+
     public DbSet<Stop> Stops { get; set; }
     public DbSet<Itinerary> Itineraries { get; set; }
 
-    public TravelInspirationDbContext(DbContextOptions<TravelInspirationDbContext> ops) : base(ops)
+    public TravelInspirationDbContext(
+        DbContextOptions<TravelInspirationDbContext> ops,
+        IMediator mediator) : base(ops)
     {
+        _publisher = mediator;
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -89,25 +96,36 @@ public class TravelInspirationDbContext : DbContext
         base.OnModelCreating(modelBuilder);
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        var domainEvents = ChangeTracker.Entries<IHasDomainEvent>()
+                .SelectMany(e => e.Entity.DomainEvents)
+                .Where(e => !e.IsPublished)
+                .ToList();
+
+        foreach (var domainEvent in domainEvents)
+        {
+            await _publisher.Publish(domainEvent, cancellationToken);
+            domainEvent.IsPublished = true;
+        }
+
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
         {
             switch (entry.State)
             {
-                case EntityState.Modified:
-                    entry.Entity.LastModifiedAt = DateTime.UtcNow;
-                    entry.Entity.LastModifiedBy = "system";
-                    break;
                 case EntityState.Added:
                     entry.Entity.CreatedAt = DateTime.UtcNow;
                     entry.Entity.CreatedBy = "system";
                     entry.Entity.LastModifiedAt = DateTime.UtcNow;
                     entry.Entity.LastModifiedBy = "system";
                     break;
+                case EntityState.Modified:
+                    entry.Entity.LastModifiedAt = DateTime.UtcNow;
+                    entry.Entity.LastModifiedBy = "system";
+                    break;
             }
         }
 
-        return base.SaveChangesAsync(cancellationToken);
+        return await base.SaveChangesAsync(cancellationToken);
     }
 }

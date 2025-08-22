@@ -1,4 +1,4 @@
-﻿namespace TravelInspiration.API.Shared.Slices;
+﻿namespace TravelInspiration.API.Shared.Common;
 
 public interface ISlice
 {

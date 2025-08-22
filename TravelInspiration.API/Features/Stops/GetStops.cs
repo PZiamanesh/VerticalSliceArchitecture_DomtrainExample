@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using TravelInspiration.API.Shared.Common;
 using TravelInspiration.API.Shared.Domain.Entities;
 using TravelInspiration.API.Shared.Persistence;
-using TravelInspiration.API.Shared.Slices;
 
 namespace TravelInspiration.API.Features.Stops;
 

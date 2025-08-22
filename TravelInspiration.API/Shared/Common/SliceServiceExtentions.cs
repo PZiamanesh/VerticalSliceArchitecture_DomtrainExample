@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace TravelInspiration.API.Shared.Slices;
+namespace TravelInspiration.API.Shared.Common;
 
 public static class SliceServiceExtentions
 {
